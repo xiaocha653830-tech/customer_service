@@ -1,0 +1,28 @@
+# 1. Python 编译缓存
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 2. 虚拟环境（绝对不能传，文件极大且因系统而异）
+venv/
+.venv/
+env/
+
+# 3. 敏感配置文件（数据库密码、大模型 API Key 绝对不要传！）
+.env
+config/.env
+config/settings_local.py
+
+# 4. IDE 配置（PyCharm / VSCode）
+.idea/
+.vscode/
+*.swp
+
+# 5. 数据库本地文件 / 日志
+*.sqlite3
+*.log
+logs/
+
+# 6. 系统文件 (MacOS / Windows)
+.DS_Store
+Thumbs.db
