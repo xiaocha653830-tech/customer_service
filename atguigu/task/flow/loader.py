@@ -1,20 +1,20 @@
 from pathlib import Path
 import yaml
-from task.flow.models import FlowList, FlowSlot, Flow, FlowStep, CollectFlowStep
+from task.flow.models import FlowsList, FlowSlot, Flow, FlowStep, CollectFlowStep
 
 
 class FlowLoader:
 
-    def load_many(self,paths:list[Path])->FlowList:
+    def load_many(self,paths:list[Path])->FlowsList:
         slots = {}
         flows = []
         for path in paths:
-            flowslist = self.load(path)
-            slots.update(flowslist.slots)
-            flows.extend(flowslist.flows)
-        return FlowList(slots=slots, flows=flows)
+            flows_list = self.load(path)
+            slots.update(flows_list.slots)
+            flows.extend(flows_list.flows)
+        return FlowsList(slots=slots, flows=flows)
 
-    def load(self,path:Path)->FlowList:
+    def load(self,path:Path)->FlowsList:
         with open(path,'r',encoding="utf-8") as file:
             data = yaml.safe_load(file)
             # 获取yml文件中的slots数据
@@ -26,9 +26,9 @@ class FlowLoader:
             # 解析flows数据
             flows = self._load_flows(flows_data,slots)
 
-            return FlowList(
+            return FlowsList(
                 slots=slots,
-                flows=[]
+                flows=flows
             )
 
     def _load_slots(self,slots_data:dict)->dict[str,FlowSlot]:
@@ -47,7 +47,7 @@ class FlowLoader:
         for flow_id,flow_data in flows_data.items():
             flow_name = flow_data.get('name')
             flow_description = flow_data.get('description')
-            steps = [FlowStep.from_dict(step_data) for step_data in flow_data.get('steps')]
+            steps = [FlowStep.from_dict(step_data) for step_data in flow_data.get('steps',[])]
             flow_slots = []
             for step in steps:
                 if isinstance(step,CollectFlowStep):

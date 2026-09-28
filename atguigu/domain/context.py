@@ -15,7 +15,7 @@ class TaskContext:
     def from_dict(cls, data: Dict[str, Any]) -> "TaskContext":
         return cls(
             flow_id=data["flow_id"],
-            step_id=data.get("step_id"),
+            step_id=data["step_id"],
             slots=dict(data.get("slots", {})),
         )
 
@@ -36,7 +36,7 @@ class SystemContext:
 
     @classmethod
     def from_dict(cls, raw_sys:Dict)->"SystemContext":
-        flow_id = raw_sys.get("flow_id")
+        flow_id = raw_sys["flow_id"]
         return SYSTEM_CONTEXT_DICT[flow_id].from_dict(raw_sys)
 
 @dataclass(slots=True)

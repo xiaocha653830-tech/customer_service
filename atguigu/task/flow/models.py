@@ -25,7 +25,7 @@ class StaticLink(FlowStepLink):
 #=======================================
 # flow下的steps属性
 #=======================================
-@dataclass(slots=True)
+
 class FlowStepType(str, Enum):
     START = "start"
     ACTION = "action"
@@ -87,9 +87,9 @@ class ActionFlowStep(FlowStep):
         return cls(
             id=dict_data["id"],
             type=FlowStepType.ACTION,
+            next=_build_next_links(dict_data.get("next", [])),
             action=dict_data["action"],
-            args=dict_data["args"]
-
+            args=dict_data.get("args",{})
         )
 
 @dataclass(slots=True)
@@ -151,10 +151,23 @@ class Flow:
     steps:list[FlowStep] = field(default_factory=list)
     slots:list[FlowSlot] = field(default_factory=list)
 
+    def get_start_step(self)->FlowStep:
+        for step in self.steps:
+            if step.type == "start":
+                return step
+        raise Exception("No start step found in current flow")
+
+
 @dataclass(slots=True)
-class FlowList:
-    slots: dict[Flow, FlowSlot] = field(default_factory=dict)
+class FlowsList:
+    slots: dict[str, FlowSlot] = field(default_factory=dict)
     flows: list[Flow] = field(default_factory=list)
+
+    def get_flow_by_id(self, flow_id)->Flow|None:
+        for flow in self.flows:
+            if flow.id == flow_id:
+                return flow
+        return None
 
 
 

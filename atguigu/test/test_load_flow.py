@@ -4,6 +4,7 @@ from task.flow.loader import FlowLoader
 
 if __name__ == '__main__':
     user_flows_path = Path(__file__).parents[2]/'flowConfig'/'user_flows.yml'
-    print(user_flows_path)
-    # loader = FlowLoader()
-    # loader.load()
+    system_flows_path = Path(__file__).parents[2]/'flowConfig'/'system_flows.yml'
+    load = FlowLoader()
+    flows_list = load.load_many([user_flows_path, system_flows_path])
+    print(flows_list)
