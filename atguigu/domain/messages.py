@@ -70,13 +70,13 @@ class BotMessage:
 class ProcessResult:
     sender_id: str
     message_id: str
-    message: list[BotMessage] = field(default_factory=list)
+    messages: list[BotMessage] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
             "sender_id": self.sender_id,
             "message_id": self.message_id,
-            "message": [message.to_dict() for message in self.message],
+            "messages": [message.to_dict() for message in self.message],
         }
 
     @classmethod
@@ -84,5 +84,5 @@ class ProcessResult:
         return cls(
             sender_id=data["sender_id"],
             message_id=data["message_id"],
-            message=[BotMessage.from_dict(message) for message in data["message"]],
+            messages=[BotMessage.from_dict(message) for message in data["message"]],
         )

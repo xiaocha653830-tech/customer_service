@@ -1,25 +1,23 @@
 from dataclasses import dataclass, field, asdict
 from typing import Dict, Any
 
-from domain.state import DialogueState
-
 
 @dataclass(slots=True)
 class TaskContext:
     flow_id:str
     step_id:str
-    slots:Dict[str,Any] = field(default_factory=dict)
+    slots:dict[str,Any] = field(default_factory=dict)
+
+    def to_dict(self)->dict:
+        return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TaskContext':
-        return cls(**data)
-
-    def to_dict(self):
-        return {
-            "flow_id": self.flow_id,
-            "step_id": self.step_id,
-            "slots": dict(self.slots),
-        }
+    def from_dict(cls, data: Dict[str, Any]) -> "TaskContext":
+        return cls(
+            flow_id=data["flow_id"],
+            step_id=data.get("step_id"),
+            slots=dict(data.get("slots", {})),
+        )
 
 
 @dataclass(slots=True)
@@ -27,117 +25,167 @@ class SystemContext:
     """
     所有系统任务上下文的父类
     """
-    task_id:str
     flow_id:str
+    step_id:str
+
+    def to_dict(self)->dict:
+        return {
+            "flow_id": self.flow_id,
+            "step_id": self.step_id,
+        }
 
     @classmethod
-    def from_dict(cls, sys_task: Dict) -> 'SystemContext':
-        return SYSTEM_CONTEXT[sys_task["flow_id"]].from_dict(sys_task)
-
-    # @classmethod
-    # def to_dict(self) -> Dict[str, Any]:
-    #     # return SYSTEM_CONTEXT[state.flow_id]
+    def from_dict(cls, raw_sys:Dict)->"SystemContext":
+        flow_id = raw_sys.get("flow_id")
+        return SYSTEM_CONTEXT_DICT[flow_id].from_dict(raw_sys)
 
 @dataclass(slots=True)
 class StartedSystemContext(SystemContext):
     """system_task_started系统任务的上下文"""
+    started_flow_id:str
     started_flow_name:str
-    started_flow_id: str
+
+    def to_dict(self)->dict:
+        return {
+            "flow_id": self.flow_id,
+            "step_id": self.step_id,
+            "started_flow_id": self.started_flow_id,
+            "started_flow_name": self.started_flow_name,
+        }
 
     @classmethod
-    def from_dict(cls, sys_task: Dict) -> 'StartedSystemContext':
+    def from_dict(cls, raw_sys:Dict)->"StartedSystemContext":
         return cls(
-            task_id=sys_task["task_id"],
-            flow_id=sys_task["flow_id"],
-            started_flow_name=sys_task["started_flow_name"],
-            started_flow_id=sys_task["started_flow_id"],
+            flow_id=raw_sys["flow_id"],
+            step_id=raw_sys["step_id"],
+            started_flow_id=raw_sys["started_flow_id"],
+            started_flow_name=raw_sys["started_flow_name"],
         )
 
 @dataclass(slots=True)
 class ResumedSystemContext(SystemContext):
     """system_task_resumed系统任务的上下文"""
-    started_flow_name: str
-    started_flow_id: str
+    resumed_flow_id:str
+    resumed_flow_name:str
+
+    def to_dict(self)->dict:
+        return {
+            "flow_id": self.flow_id,
+            "step_id": self.step_id,
+            "resumed_flow_id": self.resumed_flow_id,
+            "resumed_flow_name": self.resumed_flow_name,
+        }
 
     @classmethod
-    def from_dict(cls, sys_task: Dict) -> 'ResumedSystemContext':
+    def from_dict(cls, raw_sys:Dict)->"ResumedSystemContext":
         return cls(
-            task_id=sys_task["task_id"],
-            flow_id=sys_task["flow_id"],
-            started_flow_name=sys_task["started_flow_name"],
-            started_flow_id=sys_task["started_flow_id"],
+            flow_id=raw_sys["flow_id"],
+            step_id=raw_sys["step_id"],
+            resumed_flow_id=raw_sys["resumed_flow_id"],
+            resumed_flow_name=raw_sys["resumed_flow_name"],
         )
 
 @dataclass(slots=True)
 class CannotHandleSystemContext(SystemContext):
     """system_cannot_handle系统任务的上下文"""
-    reason: str
+    reason:str
+    def to_dict(self)->dict:
+        return {
+            "flow_id": self.flow_id,
+            "step_id": self.step_id,
+            "reason": self.reason,
+        }
 
     @classmethod
-    def from_dict(cls, sys_task: Dict) -> 'CannotHandleSystemContext':
+    def from_dict(cls, raw_sys:Dict)->"CannotHandleSystemContext":
         return cls(
-            task_id=sys_task["task_id"],
-            flow_id=sys_task["flow_id"],
-            reason=sys_task["reason"],
+            flow_id=raw_sys["flow_id"],
+            step_id=raw_sys["step_id"],
+            reason=raw_sys["reason"],
         )
 
 @dataclass(slots=True)
 class CollectSystemContext(SystemContext):
-    """system_collect_information系统任务的上下文"""
-    slot_name: str
-    response: dict = field(default_factory=dict)
+    """system_collect_information系统任务上下文"""
+    slot_name:str
+    response:dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        return {
+            "flow_id": self.flow_id,
+            "step_id": self.step_id,
+            "slot_name": self.slot_name,
+            "response": self.response,
+        }
 
     @classmethod
-    def from_dict(cls, sys_task: Dict) -> 'CollectSystemContext':
+    def from_dict(cls, raw_sys:Dict)->"CollectSystemContext":
         return cls(
-            task_id=sys_task["task_id"],
-            flow_id=sys_task["flow_id"],
-            slot_name=sys_task["slot_name"],
-            response=sys_task.get("response", {}),
+            flow_id=raw_sys["flow_id"],
+            step_id=raw_sys["step_id"],
+            slot_name=raw_sys["slot_name"],
+            response=raw_sys.get("response", {}),
         )
 
 @dataclass(slots=True)
 class InterruptedSystemContext(SystemContext):
-    """system_task_interrupted系统任务的上下文"""
-    interrupted_flow_name: str
-    interrupted_flow_id: str
-    started_flow_name: str|None = None
-    started_flow_id: str|None = None
+    """system_task_interrupted系统任务上下文"""
+    interrupted_flow_id:str
+    interrupted_flow_name:str
+    started_flow_id: str | None = None
+    started_flow_name:str | None = None
+
+    def to_dict(self)->dict:
+        return {
+            "flow_id": self.flow_id,
+            "step_id": self.step_id,
+            "interrupted_flow_id": self.interrupted_flow_id,
+            "interrupted_flow_name": self.interrupted_flow_name,
+            "started_flow_id": self.started_flow_id,
+            "started_flow_name": self.started_flow_name,
+        }
+
 
     @classmethod
-    def from_dict(cls, sys_task: Dict) -> 'InterruptedSystemContext':
+    def from_dict(cls, raw_sys:Dict)->"InterruptedSystemContext":
         return cls(
-            task_id=sys_task["task_id"],
-            flow_id=sys_task["flow_id"],
-            interrupted_flow_name=sys_task["interrupted_flow_name"],
-            interrupted_flow_id=sys_task["interrupted_flow_id"],
-            started_flow_name=sys_task.get("started_flow_name"),
-            started_flow_id=sys_task.get("started_flow_id"),
+            flow_id=raw_sys["flow_id"],
+            step_id=raw_sys["step_id"],
+            interrupted_flow_id=raw_sys["interrupted_flow_id"],
+            interrupted_flow_name=raw_sys["interrupted_flow_name"],
+            started_flow_id=raw_sys.get("started_flow_id"),
+            started_flow_name=raw_sys.get("started_flow_name"),
         )
 
 @dataclass(slots=True)
-class CancelSystemContext(SystemContext):
-    """system_task_canceled系统任务的上下文"""
-    canceled_flow_name: str
-    canceled_flow_id: str
+class CanceledSystemContext(SystemContext):
+    """system_task_canceled系统任务上下文"""
+    canceled_flow_id:str
+    canceled_flow_name:str
+
+    def to_dict(self)->dict:
+        return {
+            "flow_id": self.flow_id,
+            "step_id": self.step_id,
+            "canceled_flow_id": self.canceled_flow_id,
+            "canceled_flow_name": self.canceled_flow_name,
+        }
 
     @classmethod
-    def from_dict(cls, sys_task: Dict) -> 'CancelSystemContext':
+    def from_dict(cls, raw_sys:Dict)->"CanceledSystemContext":
         return cls(
-            task_id=sys_task["task_id"],
-            flow_id=sys_task["flow_id"],
-            canceled_flow_name=sys_task["canceled_flow_name"],
-            canceled_flow_id=sys_task["canceled_flow_id"],
+            flow_id=raw_sys["flow_id"],
+            step_id=raw_sys["step_id"],
+            canceled_flow_id=raw_sys["canceled_flow_id"],
+            canceled_flow_name=raw_sys["canceled_flow_name"],
         )
 
-SYSTEM_CONTEXT = {
+
+SYSTEM_CONTEXT_DICT= {
     "system_task_started": StartedSystemContext,
     "system_task_resumed": ResumedSystemContext,
     "system_cannot_handle": CannotHandleSystemContext,
     "system_collect_information": CollectSystemContext,
     "system_task_interrupted": InterruptedSystemContext,
-    "system_task_canceled": CancelSystemContext,
+    "system_task_canceled": CanceledSystemContext,
 }
-
-
-

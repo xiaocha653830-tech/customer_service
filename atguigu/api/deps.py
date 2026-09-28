@@ -1,9 +1,33 @@
 
 from functools import lru_cache
 
-from atguigu.service.dialogue_service import DialogueService
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from atguigu.service.dialogue_service import DialogueService
+from engine.builder import build_dialogue_engine
+from engine.dialogue_engine import DialogueEngine
+from infrastructure import database
+from repository.dialogue_state_repository import DialogueStateRepository
+
+
+async def get_session()->AsyncSession:
+    async with database.session_factory() as session:
+        yield session
+
+@lru_cache()
+def get_dialogue_state_repository(
+        session: AsyncSession = Depends(get_session),
+) -> DialogueStateRepository:
+    return DialogueStateRepository(session)
+
+@lru_cache()
+def get_dialogue_engine()->DialogueEngine:
+    return build_dialogue_engine()
 
 @lru_cache
-def get_dialogue_service()->DialogueService:
-    return DialogueService()
+def get_dialogue_service(
+        repository:DialogueStateRepository = Depends(get_dialogue_state_repository),
+        engine:DialogueEngine = Depends(get_dialogue_engine)
+)->DialogueService:
+    return DialogueService(repository, engine)

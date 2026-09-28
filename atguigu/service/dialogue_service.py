@@ -1,33 +1,21 @@
 from domain.messages import UserMessage, ProcessResult, BotMessage, MessageObject
+from domain.state import DialogueState
+from engine.dialogue_engine import DialogueEngine
+from repository.dialogue_state_repository import DialogueStateRepository
 
 
 class DialogueService:
 
-    def process_message(self,user_message:UserMessage) -> ProcessResult:
+    def __init__(self,repository:DialogueStateRepository,engine:DialogueEngine):
+        self.repository = repository
+        self.engine = engine
+
+    async def process_message(self,user_message:UserMessage) -> ProcessResult:
         # 1.调用Repository层：根据message.sender_id查询当前用户的对话状态
+        state:DialogueState = await self.repository.load(user_message.sender_id)
         # 2.调用Engine层：处理消息
+        process_result = await self.engine.process(user_message,state)
         # 3.调用Repository层：更新对话状态
+        await self.repository.save(state)
         # 4.返回处理结果
-        return ProcessResult(
-            sender_id=user_message.sender_id,
-            message_id=user_message.message_id,
-            message=[
-                BotMessage(
-                    text="你好有什么可以帮助你？",
-                    object=None
-                ),
-                BotMessage(
-                    text=None,
-                    object=MessageObject(
-                        type="product",
-                        id="123",
-                        title="联想U盘-128GB",
-                        attributes={
-                            "size": "128GB",
-                            "color": "white",
-                            "price": "49.99"
-                        }
-                    )
-                )
-            ]
-        )
+        return process_result
