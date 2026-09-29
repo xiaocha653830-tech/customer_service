@@ -149,9 +149,24 @@ flows:
 
       - id: refund_submitted
         type: action
+        action: action_submit_refund_request
+        next:
+          - if: "'show_refund_status' == 'success'"
+            then: show_refund_status_ok
+          - else: show_refund_status_error
+
+      - id: show_refund_status_ok
+        type: action
         action: action_response
         args:
           text: "好的，订单{{ slots.order_number }}的退款申请已提交，原因是：{{ slots.refund_reason }}。后续会尽快为你处理。"
+        next: end
+
+      - id: show_refund_status_error
+        type: action
+        action: action_response
+        args:
+          text: "抱歉，订单{{ slots.order_number }}的退款申请提交失败，请联系人工客服。"
         next: end
 
       - id: end
@@ -169,12 +184,12 @@ flows:
             then: respond
           - else: missing_product_context
 
-      - id: missing_product_context
-        type: action
-        action: action_response
-        args:
-          text: "请先选择一个商品，再继续咨询。"
-        next: end
+      - id: ask_product_id
+        type: collect
+        slot_name: product_id
+        response:
+        text: "请告诉我商品ID。"
+        next: respond
 
       - id: respond
         type: action
