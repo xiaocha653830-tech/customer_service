@@ -33,6 +33,7 @@ class FlowExecutor:
             current_task:SystemContext|TaskContext|None = state.current_task()
             if current_task is None:
                 return ActionCall(action_name="action_listen")
+            print(f"~~~~~~~~~~~~~~~{current_task.flow_id}~~~~~~~~~~~~{current_task.step_id}")
             flow = flowslist.get_flow_by_id(current_task.flow_id)
             step = flow.get_step_by_id(current_task.step_id)
 
@@ -153,3 +154,5 @@ class FlowExecutor:
                             action_name="action_response",
                             action_args=asdict(step.validation.failure_response)
                         )
+
+

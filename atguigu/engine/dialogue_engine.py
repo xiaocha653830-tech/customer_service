@@ -2,15 +2,34 @@ import time
 import uuid
 from typing import List
 
-from atguigu.domain.messages import UserMessage, ProcessResult, BotMessage, MessageObject, MessageType
-from atguigu.domain.state import DialogueState, Turn
+from atguigu.domain.messages import UserMessage, ProcessResult, BotMessage, MessageType
+from atguigu.domain.state import DialogueState
+from chitchat.handler import ChitchatHandler
+from clarify.responder import ClarifyResponder
+from knowledge.handler import KnowledgeHandler
+from plan.planner import TurnPlanner
+from plan.validator import TurnPlanValidator
 from task.handler import TaskHandler
 
 
 class DialogueEngine:
 
-    def __init__(self,task_handler:TaskHandler):
+    def __init__(
+            self,
+            task_handler:TaskHandler,
+            knowledge_handler:KnowledgeHandler,
+            chitchat_handler:ChitchatHandler,
+            turn_planner:TurnPlanner,
+            turn_plan_validator: TurnPlanValidator,
+            clarify_responder: ClarifyResponder
+    ):
         self.task_handler = task_handler
+        self.knowledge_handler = knowledge_handler
+        self.chitchat_handler = chitchat_handler
+        self.turn_planner = turn_planner
+        self.turn_plan_validator = turn_plan_validator
+        self.clarify_responder = clarify_responder
+
 
     async def process(self,user_message:UserMessage,state:DialogueState) -> ProcessResult:
         # 1.准备会话
@@ -59,8 +78,25 @@ class DialogueEngine:
             state.update_session_last_activity()
 
     async def _handle_text_message(self, user_message: UserMessage, state: DialogueState) -> List[BotMessage]:
-        # TODO 文本消息处理
-        return [BotMessage(text="文本消息处理的机器回复")]
+        # 1.意图识别
+        turn_plan = await self.turn_planner.predict(
+            self.task_handler.flowslist,
+            self.knowledge_handler.knowledge_intents,
+            state
+        )
+        # 2.结构化命令校验
+        validation_result = self.turn_plan_validator.validate(turn_plan,state,self.knowledge_handler.knowledge_intents)
+        # 3.轨道分发处理
+        if validation_result:
+            if turn_plan.task is not None:
+                messages = await self.task_handler.handle(turn_plan.task.commands,state)
+            elif turn_plan.knowledge is not None:
+                messages = await self.knowledge_handler.handle(turn_plan.knowledge.intents,state)
+            else:
+                messages = await self.chitchat_handler.handle(state)
+        else:
+            messages = await self.clarify_responder.respond(state,validation_result.reason)
+        return messages
 
     async def _handle_object_message(self, user_message: UserMessage, state: DialogueState) -> List[BotMessage]:
         # TODO 对象消息处理

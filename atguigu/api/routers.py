@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from api.deps import get_dialogue_service
 from api.schemas import ChatHistoryResponse, ChatHistoryMessageResponse, ChatRequest, ChatResponse, \
     BotMessageResponse, ChatObjectPayload
-from domain.messages import UserMessage
+from domain.messages import UserMessage, ProcessResult
 from service.dialogue_service import DialogueService
 
 router = APIRouter()
@@ -52,11 +52,11 @@ async def chat(
     user_message = UserMessage.from_dict(dict_data)
 
     # 2.调用DialogueService类中的process_message方法进行对话处理
-    process_result = dialogue_service.process_message(user_message)
+    process_result:ProcessResult = await dialogue_service.process_message(user_message)
 
     # 3.将领域模型 process_result 转换成交互模型 ChatResponse
     messages=[]
-    for message in process_result.message:
+    for message in process_result.messages:
         message_response = BotMessageResponse(
             text=message.text,
             object=ChatObjectPayload(

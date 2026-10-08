@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field
 
+from clarify.reason import ClarifyReason
 from task.commands.models import Command
 
 
 @dataclass(slots=True)
 class TaskTurnPlan:
-    command: list[Command] = field(default_factory=list)
+    commands: list[Command] = field(default_factory=list)
+
 
     @classmethod
     def from_dict(cls, dict_data: dict) -> 'TaskTurnPlan':
@@ -40,3 +42,8 @@ class TurnPlan:
             knowledge = KnowledgeTurnPlan.from_dict(dict_data.get("knowledge")) if dict_data.get("knowledge") else None,
             chitchat = ChitchatTurnPlan() if dict_data.get('chitchat',{}) is not None else None
         )
+
+@dataclass(slots=True)
+class TurnPlanValidationResult:
+    valid: bool
+    reason: ClarifyReason | None = None

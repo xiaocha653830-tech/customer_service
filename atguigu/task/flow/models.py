@@ -29,7 +29,7 @@ class StaticLink(FlowStepLink):
 class FlowStepType(str, Enum):
     START = "start"
     ACTION = "action"
-    COLLECT = "collect "
+    COLLECT = "collect"
     END = "end"
 
 
@@ -40,16 +40,9 @@ class FlowStep:
     next:list[FlowStepLink]
 
     @classmethod
-    def from_dict(cls, dict_data:dict)->"FlowStep":
+    def from_dict(cls, dict_data: dict) -> "FlowStep":
         step_type = dict_data.get("type")
-        if step_type == "start":
-            return StartFlowStep.from_dict(dict_data)
-        elif step_type == "action":
-            return ActionFlowStep.from_dict(dict_data)
-        elif step_type == "collect ":
-            return CollectFlowStep.from_dict(dict_data)
-        elif step_type == "end":
-            return EndFlowStep.from_dict(dict_data)
+        return FLOWSTEP_DICT[step_type].from_dict(dict_data)
 
 @dataclass(slots=True)
 class StartFlowStep(FlowStep):
@@ -69,7 +62,7 @@ def _build_next_links(next_data:str | list)->list[FlowStepLink]:
         for link_data in next_data:
             if link_data.get("if"):
                 next_list.append(ConditionalLink(
-                    conditional=link_data.get("if"),
+                    condition=link_data.get("if"),
                     target=link_data.get("then")
                 ))
             else:
@@ -98,7 +91,7 @@ class EndFlowStep(FlowStep):
     def from_dict(cls, dict_data: dict) -> "EndFlowStep":
         return cls(
             id=dict_data["id"],
-            type=FlowStepType.START,
+            type=FlowStepType.END,
             next=[]
         )
 
@@ -120,18 +113,27 @@ class CollectFlowStep(FlowStep):
     validation:SlotValidation | None = None
 
     @classmethod
-    def from_dict(cls, dict_data:dict)->"CollectFlowStep":
+    def from_dict(cls, dict_data: dict) -> "CollectFlowStep":
+        validation_raw = dict_data.get("validation") or {}
+        failure_response_raw = validation_raw.get("failure_response") or {}
         return cls(
             id=dict_data["id"],
             type=FlowStepType.COLLECT,
-            next=_build_next_links(dict_data["next"]),
+            next=_build_next_links(dict_data.get("next", [])),
             slot_name=dict_data["slot_name"],
-            response=ResponseDefinition(**dict_data.get("response",{})),
+            response=ResponseDefinition(**(dict_data.get("response") or {})),
             validation=SlotValidation(
-                condition=dict_data.get("validation",{}).get("condition",""),
-                failure_response=ResponseDefinition(**dict_data.get("validation",{}).get("failure_response",{}))
+                condition=validation_raw.get("condition", ""),
+                failure_response=ResponseDefinition(**failure_response_raw),
             ) if dict_data.get("validation") else None,
         )
+
+FLOWSTEP_DICT = {
+    "start": StartFlowStep,
+    "end": EndFlowStep,
+    "action": ActionFlowStep,
+    "collect": CollectFlowStep
+}
 
 #=======================================
 # flow

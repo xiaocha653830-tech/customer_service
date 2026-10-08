@@ -23,7 +23,7 @@ class ActionResponse(Action):
             text = args.get("text","")
             data = {
                 "slots":state.active_task.slots if state.active_task else {},
-                "context":state.active_system_task.to_dict() if state.active_task else {},
+                "context":state.active_system_task.to_dict() if state.active_system_task else {},
             }
             rendered_text = Template(text).render(data)
             return ActionResult(
@@ -39,7 +39,16 @@ class ActionResponse(Action):
             }
             rendered_text = Template(text).render(data)
             #2.llm对渲染后的回复进行改写
-            prompt_text = args.get("prompt", "")
+            prompt_text = args.get("prompt", """你是一个中文电商客服助手，语气自然、友好、简洁。
+                                                请结合对话上下文，把下面的建议回复改写得更自然，但不要改变含义。
+                                            
+                                                对话历史：
+                                                {{ history }}
+                                            
+                                                用户最后一句：
+                                                {{ user_message }}
+                                            
+                                                建议回复：{{ current_response }}""")
             prompt_inputs = {
                 "history" : build_history(state.get_current_session().turns),
                 "user_message" : state.pending_turn.input_message.text,
@@ -58,7 +67,12 @@ class ActionResponse(Action):
 
         else:
             #生成模式
-            prompt_text = args.get("prompt", "")
+            prompt_text = args.get("prompt", """你是一个中文电商客服助手，语气自然、友好、简洁。
+                                                请根据对话上下文和用户最后一句，生成一句客服回复。
+                                            
+                                                对话历史：{{ history }}
+                                            
+                                                用户最后一句：{{ user_message }}""")
             prompt_inputs = {
                 "history": build_history(state.get_current_session().turns),
                 "user_message": state.pending_turn.input_message.text,
