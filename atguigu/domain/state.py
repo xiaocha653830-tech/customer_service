@@ -186,7 +186,8 @@ class DialogueState:
         self.active_system_task = None
 
     def set_slots(self, slots:dict):
-        self.active_task.slots.update(slots)
+        if self.active_task is not None:
+            self.active_task.slots.update(slots)
 
     def cancel_active_task(self):
         self.active_task = None
@@ -198,3 +199,15 @@ class DialogueState:
                 self.active_task = task
                 self.paused_tasks.remove(task)
                 return
+
+    def current_task(self)->SystemContext|TaskContext|None:
+        return self.active_system_task or self.active_task
+
+    def set_flow_next(self,target:str):
+        self.current_task().step_id = target
+
+    def end_system_task(self):
+        self.active_system_task = None
+
+    def end_task(self):
+        self.active_task = None

@@ -4,9 +4,13 @@ from typing import List
 
 from atguigu.domain.messages import UserMessage, ProcessResult, BotMessage, MessageObject, MessageType
 from atguigu.domain.state import DialogueState, Turn
+from task.handler import TaskHandler
 
 
 class DialogueEngine:
+
+    def __init__(self,task_handler:TaskHandler):
+        self.task_handler = task_handler
 
     async def process(self,user_message:UserMessage,state:DialogueState) -> ProcessResult:
         # 1.准备会话

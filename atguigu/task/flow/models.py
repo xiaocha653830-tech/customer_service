@@ -12,7 +12,7 @@ class FlowStepLink:
 
 @dataclass(slots=True)
 class ConditionalLink(FlowStepLink):
-    conditional:str
+    condition:str
 
 @dataclass(slots=True)
 class FallbackLink(FlowStepLink):
@@ -81,7 +81,7 @@ def _build_next_links(next_data:str | list)->list[FlowStepLink]:
 @dataclass(slots=True)
 class ActionFlowStep(FlowStep):
     action:str
-    args:Dict[str,Any] = field(default_factory=dict)
+    args:Dict[str,Any]|str = field(default_factory=dict)
     @classmethod
     def from_dict(cls, dict_data:dict)->"ActionFlowStep":
         return cls(
@@ -156,6 +156,12 @@ class Flow:
             if step.type == "start":
                 return step
         raise Exception("No start step found in current flow")
+
+    def get_step_by_id(self, step_id)->FlowStep|None:
+        for step in self.steps:
+            if step.id == step_id:
+                return step
+        return None
 
 
 @dataclass(slots=True)
