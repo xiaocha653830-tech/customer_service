@@ -10,4 +10,5 @@ dependencies = [
     "langchain-openai>=1.6.2",
     "pydantic-settings>=2.15.0",
     "sqlalchemy>=2.0.54",
+    "websockets>=16.1.1",
 ]

@@ -229,6 +229,7 @@ dependencies = [
     { name = "langchain-openai" },
     { name = "pydantic-settings" },
     { name = "sqlalchemy" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -240,6 +241,7 @@ requires-dist = [
     { name = "langchain-openai", specifier = ">=1.6.2" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "sqlalchemy", specifier = ">=2.0.54" },
+    { name = "websockets", specifier = ">=16.1.1" },
 ]
 
 [[package]]

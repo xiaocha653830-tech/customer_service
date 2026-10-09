@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, List
 
 from atguigu.domain.context import TaskContext, SystemContext
-from atguigu.domain.messages import UserMessage, BotMessage
+from atguigu.domain.messages import UserMessage, BotMessage, MessageObject
 
 
 @dataclass(slots=True)
@@ -211,3 +211,6 @@ class DialogueState:
 
     def end_task(self):
         self.active_task = None
+
+    def set_focused_object(self,object:MessageObject):
+        self.focused_object = FocusedObject(**object.to_dict())

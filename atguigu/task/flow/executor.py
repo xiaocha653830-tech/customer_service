@@ -136,8 +136,8 @@ class FlowExecutor:
                 condition = step.validation.condition
                 globals = {"__builtins__":{}}
                 locals = {
-                    "slots":state.active_task.slots,
-                    "context":state.active_system_task.to_dict()
+                    "slots": state.active_task.slots if state.active_task is not None else {},
+                    "context": state.active_system_task.to_dict() if state.active_system_task is not None else {}
                 }
                 if bool(eval(condition,globals,locals)):
                     #通过校验

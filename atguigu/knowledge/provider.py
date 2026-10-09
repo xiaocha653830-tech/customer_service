@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 
-from conf.config import settings
-from domain.state import DialogueState, FocusedObject
-from infrastructure import http_util
+from atguigu.conf.config import settings
+from atguigu.domain.state import DialogueState, FocusedObject
+from atguigu.infrastructure import http_util
 
 
 @dataclass
@@ -23,8 +23,8 @@ class ProductAPIProvider(KnowledgeProvider):
     provider_id = "api.product"
 
     async def retrieve(self, state: DialogueState) -> List[KnowledgeChunk]:
-        if state.focused_object is not None and state.focused_object.type== "product":
-            # 1.从focused_object中获取商品ID
+        # 1.从focused_object中获取商品ID
+        if state.focused_object is not None and state.focused_object.type == "product":
             product_id = state.focused_object.id
             # 2.调用商品查询接口，获取商品信息
             text = await self._fetch(product_id)

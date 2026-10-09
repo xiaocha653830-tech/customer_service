@@ -8,6 +8,8 @@ from atguigu.engine.dialogue_engine import DialogueEngine
 from atguigu.infrastructure import database
 from atguigu.repository.dialogue_state_repository import DialogueStateRepository
 from atguigu.service.dialogue_service import DialogueService
+from service.history_service import HistoryService
+
 
 async def get_session()->AsyncSession:
     async with database.session_factory() as session:
@@ -29,3 +31,9 @@ def get_dialogue_service(
         engine: DialogueEngine = Depends(get_dialogue_engine),
 )->DialogueService:
     return DialogueService(repository,engine)
+
+@lru_cache()
+def get_history_service(
+        repository: DialogueStateRepository = Depends(get_dialogue_state_repository),
+):
+    return HistoryService(repository)

@@ -9,6 +9,8 @@ class ChatObjectPayload(BaseModel):
 
 class ChatHistoryMessageResponse(BaseModel):
     role:str
+    session_id:str
+    session_started_at:float
     text:str|None=None
     object:ChatObjectPayload | None=None
 

@@ -3,7 +3,7 @@ from typing import Dict, Any
 
 from atguigu.conf.config import settings
 from atguigu.domain.state import DialogueState
-from atguigu.infrastructure.http_util import http_client
+from atguigu.infrastructure import http_util
 from atguigu.task.action.base import Action, ActionResult
 
 
@@ -19,24 +19,20 @@ class SubmitRefundRequestAction(Action):
         # 2.调用业务后端创建退款申请
         url = f"{settings.commerce_api_base_url.rstrip('/')}/orders/{quote(order_number)}/refund-applications"
         try:
-            response = await http_client.post(url, json={"reason": refund_reason or "", "submitted_by": "system"})
+            response = await http_util.http_client.post(url, json={"reason": refund_reason or "", "submitted_by": "system"})
             result = response.json()
+            print(result)
         except Exception:
             return ActionResult(slot_updates={
                 "order_submit_status": "error",
             })
 
         # 3.根据返回结果设置退款状态
-        if not isinstance(result, dict):
-            return ActionResult(slot_updates={
-                "order_submit_status": "error",
-            })
-
         if result.get("code") == 0:
             return ActionResult(slot_updates={
-                "order_submit_status": "success",
+                "tips":f"好的，订单{order_number}的退款申请已提交，原因是：{refund_reason}。后续会尽快为你处理。",
             })
         else:
             return ActionResult(slot_updates={
-                "order_submit_status": "error",
+                "tips":f"抱歉，订单{order_number}的退款申请提交失败，请联系人工客服。",
             })
